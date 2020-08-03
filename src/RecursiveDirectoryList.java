@@ -14,19 +14,20 @@ public class RecursiveDirectoryList {
      */
     public void listFilesAndDirectories(File directory, int depth) {
         if (! directory.isDirectory()) {
-            if (!directory.exists()) System.out.printf("There is no such directory!");
-            else System.out.printf("That file is not a directory");
+            if (!directory.exists()) System.out.print("There is no such directory!");
+            else System.out.print("That file is not a directory");
         } else {
             String[] files = directory.list();
 
-            for (int i = 0; i < files.length; i++) {
-                System.out.println("    ".repeat(depth) + files[i]);
+            if (files != null) {
+                for (String file : files) {
+                    System.out.println("    ".repeat(depth) + file);
 
-                String subDirectoryName = directory.getPath() + "/" + files[i];
-                File current = new File(subDirectoryName);
+                    File current = new File(directory, file);
 
-                if (current.isDirectory()) {
-                    listFilesAndDirectories(current, depth + 1);
+                    if (current.isDirectory()) {
+                        listFilesAndDirectories(current, depth + 1);
+                    }
                 }
             }
         }
