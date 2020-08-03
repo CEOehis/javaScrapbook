@@ -33,9 +33,14 @@ public class SimpleServer {
         }
     }
 
+    /**
+     *
+     * @param connection Socket for handling client connections
+     */
     private static void handleConnection(Socket connection) {
         PrintWriter out = null;
         OutputStream outputStream = null;
+
         try {
             Scanner in = new Scanner(connection.getInputStream());
             // character output stream for writing the headers
@@ -61,43 +66,27 @@ public class SimpleServer {
 
             if (! (httpVersion.equalsIgnoreCase("HTTP/1.1") || httpVersion.equalsIgnoreCase("HTTP/1.0"))) {
                 // invalid request format
-                out.print("HTTP/1.1 400 Bad Request\r\n");
-                out.print("Connection: close\r\n");
-                out.print("Content-Type: text/html\r\n");
-                out.print("\r\n");
-                out.flush();
+                sendErrorHeaders(out, "400 Bad Request");
                 sendErrorResponse(400, outputStream);
                 return;
             }
 
             if (! method.equalsIgnoreCase("GET")) {
                 // we only support the GET method
-                out.print("HTTP/1.1 501 Not Implemented\r\n");
-                out.print("Connection: close\r\n");
-                out.print("Content-Type: text/html\r\n");
-                out.print("\r\n");
-                out.flush();
+                sendErrorHeaders(out, "501 Not Implemented");
                 sendErrorResponse(501, outputStream);
                 return;
             }
 
-            // check if file exists
             if (! file.exists()) {
-                out.print("HTTP/1.1 404 Not found\r\n");
-                out.print("Connection: close\r\n");
-                out.print("Content-Type: text/html\r\n");
-                out.print("\r\n");
-                out.flush();
+                // check if file does not exist
+                sendErrorHeaders(out, "404 Not found");
                 sendErrorResponse(404, outputStream);
                 return;
             }
 
             if (! file.canRead()) {
-                out.print("HTTP/1.1 403 Forbidden\r\n");
-                out.print("Connection: close\r\n");
-                out.print("Content-Type: text/html\r\n");
-                out.print("\r\n");
-                out.flush();
+                sendErrorHeaders(out, "403 Forbidden");
                 sendErrorResponse(403, outputStream);
                 return;
             }
@@ -113,11 +102,7 @@ public class SimpleServer {
         catch (Exception e) {
             System.out.println("Error while communicating with client: " + e);
             assert out != null;
-            out.print("HTTP/1.1 500 Internal Server Error\r\n");
-            out.print("Connection: close\r\n");
-            out.print("Content-Type: text/html\r\n");
-            out.print("\r\n");
-            out.flush();
+            sendErrorHeaders(out, "500 Internal Server Error");
             sendErrorResponse(500, outputStream);
         }
         finally {  // make SURE connection is closed before returning!
@@ -128,6 +113,16 @@ public class SimpleServer {
             }
             System.out.println("Connection closed.");
         }
+    }
+
+    private static void sendErrorHeaders(PrintWriter out, String s) {
+        out.print("HTTP/1.1 ");
+        out.print(s);
+        out.print("\r\n");
+        out.print("Connection: close\r\n");
+        out.print("Content-Type: text/html\r\n");
+        out.print("\r\n");
+        out.flush();
     }
 
     private static String getMimeType(String fileName) {
